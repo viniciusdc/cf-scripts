@@ -64,10 +64,11 @@ Many times one can use the <code class="docutils literal notranslate"><span clas
 a custom migrator.
 Custom migrators are used when the internals of the conda-forge system (the various
 yaml configuration files) need to be changed.</p>
-<p>Example of migrator addition function:</p>
+<p>Example of migrator addition function for openssl, for most simple re-pinning migration
+one could replace <code class="docutils literal notranslate"><span class="pre">openssl</span></code> with the package which got pinned and things would work:</p>
 <blockquote>
-<div><div class="highlight-xonsh notranslate"><div class="highlight"><pre><span></span><span class="k">def</span> <span class="nf">add_rebuild</span><span class="p">(</span><span class="n">migrators</span><span class="p">,</span> <span class="n">gx</span><span class="p">):</span>
-<span class="sd">&quot;&quot;&quot;Adds rebuild migrators.</span>
+<div><div class="highlight-xonsh notranslate"><div class="highlight"><pre><span></span><span class="k">def</span> <span class="nf">add_rebuild_openssl</span><span class="p">(</span><span class="n">migrators</span><span class="p">,</span> <span class="n">gx</span><span class="p">):</span>
+<span class="sd">&quot;&quot;&quot;Adds rebuild openssl migrators.</span>
 
 <span class="sd">Parameters</span>
 <span class="sd">----------</span>
@@ -76,54 +77,39 @@ yaml configuration files) need to be changed.</p>
 
 <span class="sd">&quot;&quot;&quot;</span>
 
-<span class="c1"># Make a copy of the graph so we don&#39;t delete things</span>
 <span class="n">total_graph</span> <span class="o">=</span> <span class="n">copy</span><span class="o">.</span><span class="n">deepcopy</span><span class="p">(</span><span class="n">gx</span><span class="p">)</span>
 
-<span class="c1"># For each feedstock check the metadata we have</span>
 <span class="k">for</span> <span class="n">node</span><span class="p">,</span> <span class="n">attrs</span> <span class="ow">in</span> <span class="n">gx</span><span class="o">.</span><span class="n">node</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
     <span class="n">meta_yaml</span> <span class="o">=</span> <span class="n">attrs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;meta_yaml&quot;</span><span class="p">,</span> <span class="p">{})</span> <span class="ow">or</span> <span class="p">{}</span>
-    <span class="n">bh</span> <span class="o">=</span> <span class="n">get_requirements</span><span class="p">(</span><span class="n">meta_yaml</span><span class="p">,</span> <span class="n">run</span><span class="o">=</span><span class="bp">False</span><span class="p">)</span>
+    <span class="n">bh</span> <span class="o">=</span> <span class="n">get_requirements</span><span class="p">(</span><span class="n">meta_yaml</span><span class="p">)</span>
+    <span class="n">openssl_c</span> <span class="o">=</span> <span class="s1">&#39;openssl&#39;</span> <span class="ow">in</span> <span class="n">bh</span>
 
-    <span class="c1"># Check if python, compilers, openblas or r-base are in the recipe</span>
-    <span class="n">py_c</span> <span class="o">=</span> <span class="p">(</span><span class="s1">&#39;python&#39;</span> <span class="ow">in</span> <span class="n">bh</span> <span class="ow">and</span>
-            <span class="n">meta_yaml</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;build&#39;</span><span class="p">,</span> <span class="p">{})</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;noarch&#39;</span><span class="p">)</span> <span class="o">!=</span> <span class="s1">&#39;python&#39;</span><span class="p">)</span>
-    <span class="n">com_c</span> <span class="o">=</span> <span class="p">(</span><span class="nb">any</span><span class="p">([</span><span class="n">req</span><span class="o">.</span><span class="n">endswith</span><span class="p">(</span><span class="s1">&#39;_compiler_stub&#39;</span><span class="p">)</span> <span class="k">for</span> <span class="n">req</span> <span class="ow">in</span> <span class="n">bh</span><span class="p">])</span> <span class="ow">or</span>
-             <span class="nb">any</span><span class="p">([</span><span class="n">a</span> <span class="ow">in</span> <span class="n">bh</span> <span class="k">for</span> <span class="n">a</span> <span class="ow">in</span> <span class="n">Compiler</span><span class="o">.</span><span class="n">compilers</span><span class="p">]))</span>
-    <span class="n">r_c</span> <span class="o">=</span> <span class="s1">&#39;r-base&#39;</span> <span class="ow">in</span> <span class="n">bh</span>
-    <span class="n">ob_c</span> <span class="o">=</span> <span class="s1">&#39;openblas&#39;</span> <span class="ow">in</span> <span class="n">bh</span>
-
-    <span class="c1"># Extract the host, run and test deps</span>
     <span class="n">rq</span> <span class="o">=</span> <span class="n">_host_run_test_dependencies</span><span class="p">(</span><span class="n">meta_yaml</span><span class="p">)</span>
 
-    <span class="c1"># Remove packages from the graph which don&#39;t depend on the packages</span>
-    <span class="c1"># that are being rebuilt, note that pluck does the right thing to</span>
-    <span class="c1"># not remove links which are needed for topo order</span>
     <span class="k">for</span> <span class="n">e</span> <span class="ow">in</span> <span class="nb">list</span><span class="p">(</span><span class="n">total_graph</span><span class="o">.</span><span class="n">in_edges</span><span class="p">(</span><span class="n">node</span><span class="p">)):</span>
         <span class="k">if</span> <span class="n">e</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">rq</span><span class="p">:</span>
             <span class="n">total_graph</span><span class="o">.</span><span class="n">remove_edge</span><span class="p">(</span><span class="o">*</span><span class="n">e</span><span class="p">)</span>
-    <span class="k">if</span> <span class="ow">not</span> <span class="nb">any</span><span class="p">([</span><span class="n">py_c</span><span class="p">,</span> <span class="n">com_c</span><span class="p">,</span> <span class="n">r_c</span><span class="p">,</span> <span class="n">ob_c</span><span class="p">]):</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="nb">any</span><span class="p">([</span><span class="n">openssl_c</span><span class="p">]):</span>
         <span class="n">pluck</span><span class="p">(</span><span class="n">total_graph</span><span class="p">,</span> <span class="n">node</span><span class="p">)</span>
 
 <span class="c1"># post plucking we can have several strange cases, lets remove all selfloops</span>
 <span class="n">total_graph</span><span class="o">.</span><span class="n">remove_edges_from</span><span class="p">(</span><span class="n">total_graph</span><span class="o">.</span><span class="n">selfloop_edges</span><span class="p">())</span>
 
-<span class="n">top_level</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span><span class="n">node</span> <span class="k">for</span> <span class="n">node</span> <span class="ow">in</span> <span class="n">total_graph</span> <span class="k">if</span> <span class="ow">not</span> <span class="nb">list</span><span class="p">(</span>
-    <span class="n">total_graph</span><span class="o">.</span><span class="n">predecessors</span><span class="p">(</span><span class="n">node</span><span class="p">)))</span>
-
-<span class="c1"># We extract the cycles because these cause problems with topo sorts</span>
-<span class="c1"># normally we build all the cycle packages at once and let the maintianers</span>
-<span class="c1"># deal with it</span>
+<span class="c1"># everything which depends on openssl and has not predecessors in the</span>
+<span class="c1"># openssl dependents graph</span>
+<span class="n">top_level</span> <span class="o">=</span> <span class="p">{</span><span class="n">node</span> <span class="k">for</span> <span class="n">node</span> <span class="ow">in</span> <span class="n">gx</span><span class="o">.</span><span class="n">successors</span><span class="p">(</span><span class="s2">&quot;openssl&quot;</span><span class="p">)</span> <span class="k">if</span>
+             <span class="p">(</span><span class="n">node</span> <span class="ow">in</span> <span class="n">total_graph</span><span class="p">)</span> <span class="ow">and</span>
+             <span class="nb">len</span><span class="p">(</span><span class="nb">list</span><span class="p">(</span><span class="n">total_graph</span><span class="o">.</span><span class="n">predecessors</span><span class="p">(</span><span class="n">node</span><span class="p">)))</span> <span class="o">==</span> <span class="mi">0</span><span class="p">}</span>
+<span class="c1"># Since we can&#39;t figure out what order to build packages in a cycle in</span>
+<span class="c1"># we build them all at once</span>
 <span class="n">cycles</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">nx</span><span class="o">.</span><span class="n">simple_cycles</span><span class="p">(</span><span class="n">total_graph</span><span class="p">))</span>
-<span class="k">print</span><span class="p">(</span><span class="s1">&#39;cycles are here:&#39;</span><span class="p">,</span> <span class="n">cycles</span><span class="p">)</span>
 
 <span class="n">migrators</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
-    <span class="n">CompilerRebuild</span><span class="p">(</span><span class="n">graph</span><span class="o">=</span><span class="n">total_graph</span><span class="p">,</span>
-            <span class="c1"># Number of PRs an hour (try to keep to single digits so we</span>
-            <span class="c1"># don&#39;t overload things</span>
+    <span class="n">Rebuild</span><span class="p">(</span><span class="n">graph</span><span class="o">=</span><span class="n">total_graph</span><span class="p">,</span>
             <span class="n">pr_limit</span><span class="o">=</span><span class="mi">5</span><span class="p">,</span>
-            <span class="n">name</span><span class="o">=</span><span class="s1">&#39;Python 3.7, GCC 7, R 3.5.1, openBLAS 0.3.2&#39;</span><span class="p">,</span>
-                    <span class="n">top_level</span><span class="o">=</span><span class="n">top_level</span><span class="p">,</span>
-                    <span class="n">cycles</span><span class="o">=</span><span class="n">cycles</span><span class="p">))</span>
+            <span class="n">name</span><span class="o">=</span><span class="s1">&#39;OpenSSL&#39;</span><span class="p">,</span>
+            <span class="n">top_level</span><span class="o">=</span><span class="n">top_level</span><span class="p">,</span>
+            <span class="n">cycles</span><span class="o">=</span><span class="n">cycles</span><span class="p">,</span> <span class="n">obj_version</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
 </pre></div>
 </div>
 </div></blockquote>
