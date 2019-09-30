@@ -1,5 +1,6 @@
 ./_sources/index.rst.txt
 ./_sources/migrators.rst.txt
+./_sources/usage.rst.txt
 ./_static/alabaster.css
 ./_static/basic.css
 ./_static/custom.css
@@ -21,3 +22,4 @@
 ./objects.inv
 ./search.html
 ./searchindex.js
+./usage.html

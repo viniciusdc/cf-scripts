@@ -14,6 +14,7 @@
     <script type="text/javascript" src="_static/language_data.js"></script>
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="Usage Docs" href="usage.html" />
     <link rel="prev" title="Welcome to cf-scripts’s documentation!" href="index.html" />
    
   <link rel="stylesheet" href="_static/custom.css" type="text/css" />
@@ -39,7 +40,13 @@ as simple as a yaml syntax change, or as complex as moving compiler stacks.
 Most migrations are due to a change in the global pinning, as packages change
 their pinning, the entire stack which depends directly on that package will
 need to be updated.
-This document will teach you how to create new migrators</p>
+This document will teach you how to create new migrators.</p>
+<blockquote>
+<div><div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>Unless you need to write a custom migrator, you can call for a migration by adding a yaml file to the <code class="docutils literal notranslate"><span class="pre">recipe/migrations</span></code> folder of <code class="docutils literal notranslate"><span class="pre">conda-forge-pinning-feedstock</span></code> and issuing a PR. Once merged the migration will start.</p>
+</div>
+</div></blockquote>
 </div>
 <div class="section" id="building-a-migration">
 <h1>Building a Migration<a class="headerlink" href="#building-a-migration" title="Permalink to this headline">¶</a></h1>
@@ -137,6 +144,7 @@ one could replace <code class="docutils literal notranslate"><span class="pre">o
 <li class="toctree-l2"><a class="reference internal" href="#adding-to-auto-tick-xsh">Adding to <code class="docutils literal notranslate"><span class="pre">auto_tick.xsh</span></code></a></li>
 </ul>
 </li>
+<li class="toctree-l1"><a class="reference internal" href="usage.html">Usage Docs</a></li>
 </ul>
 
 <div class="relations">
@@ -144,6 +152,7 @@ one could replace <code class="docutils literal notranslate"><span class="pre">o
 <ul>
   <li><a href="index.html">Documentation overview</a><ul>
       <li>Previous: <a href="index.html" title="previous chapter">Welcome to cf-scripts’s documentation!</a></li>
+      <li>Next: <a href="usage.html" title="next chapter">Usage Docs</a></li>
   </ul></li>
 </ul>
 </div>
