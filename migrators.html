@@ -44,9 +44,16 @@ This document will teach you how to create new migrators.</p>
 <blockquote>
 <div><div class="admonition note">
 <p class="admonition-title">Note</p>
-<p>Unless you need to write a custom migrator, you can call for a migration by adding a yaml file to the <code class="docutils literal notranslate"><span class="pre">recipe/migrations</span></code> folder of <code class="docutils literal notranslate"><span class="pre">conda-forge-pinning-feedstock</span></code> and issuing a PR. Once merged the migration will start.</p>
+<p>Unless you need to write a custom migrator, you should call for a migration using the <code class="docutils literal notranslate"><span class="pre">conda-forge-pinning-feedstock</span></code></p>
 </div>
 </div></blockquote>
+</div>
+<div class="section" id="building-a-migration-yaml">
+<h1>Building a Migration YAML<a class="headerlink" href="#building-a-migration-yaml" title="Permalink to this headline">¶</a></h1>
+<p>For most migrations a migration can be created by adding a new migration yaml file in the <code class="docutils literal notranslate"><span class="pre">recipe/migrations</span></code> folder of <code class="docutils literal notranslate"><span class="pre">conda-forge-pinning-feedstock</span></code> and issuing a PR.
+Once merged the migration will start.
+You can copy the <code class="docutils literal notranslate"><span class="pre">recipe/migrations/example.exyaml</span></code> example and modify it similar to the staged-recipes example recipe.
+Note that the <code class="docutils literal notranslate"><span class="pre">migration_ts</span></code> is the timestamp of the migration and can be created by copying the result of <code class="docutils literal notranslate"><span class="pre">import</span> <span class="pre">time;</span> <span class="pre">print(time.time())</span></code> from a python interpreter.</p>
 </div>
 <div class="section" id="building-a-migration">
 <h1>Building a Migration<a class="headerlink" href="#building-a-migration" title="Permalink to this headline">¶</a></h1>
@@ -140,6 +147,7 @@ one could replace <code class="docutils literal notranslate"><span class="pre">o
 <h3>Navigation</h3>
 <ul class="current">
 <li class="toctree-l1 current"><a class="current reference internal" href="#">Making Migrators</a></li>
+<li class="toctree-l1"><a class="reference internal" href="#building-a-migration-yaml">Building a Migration YAML</a></li>
 <li class="toctree-l1"><a class="reference internal" href="#building-a-migration">Building a Migration</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="#adding-to-auto-tick-xsh">Adding to <code class="docutils literal notranslate"><span class="pre">auto_tick.xsh</span></code></a></li>
 </ul>
