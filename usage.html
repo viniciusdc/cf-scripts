@@ -46,7 +46,7 @@ Note that you will need a copy of <code class="docutils literal notranslate"><sp
 </div></blockquote>
 <p>Note that all nodes in the graph are backed by <code class="docutils literal notranslate"><span class="pre">LazyJson</span></code> objects associated with the <code class="docutils literal notranslate"><span class="pre">payload</span></code> key which allow for lazy loading of the node attributes.</p>
 <blockquote>
-<div><div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">print</span><span class="p">(</span><span class="nb">dict</span><span class="p">(</span><span class="n">gx</span><span class="o">.</span><span class="n">node</span><span class="p">[</span><span class="s1">&#39;python&#39;</span><span class="p">][</span><span class="s1">&#39;payload&#39;</span><span class="p">]))</span>
+<div><div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="nb">print</span><span class="p">(</span><span class="nb">dict</span><span class="p">(</span><span class="n">gx</span><span class="o">.</span><span class="n">node</span><span class="p">[</span><span class="s1">&#39;python&#39;</span><span class="p">][</span><span class="s1">&#39;payload&#39;</span><span class="p">]))</span>
 </pre></div>
 </div>
 </div></blockquote>
@@ -58,10 +58,10 @@ Note that you will need a copy of <code class="docutils literal notranslate"><sp
 <div><div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">conda_forge_tick.auto_tick</span> <span class="kn">import</span> <span class="n">initialize_migrators</span>
 <span class="o">*</span><span class="n">_</span><span class="p">,</span> <span class="n">migrators</span> <span class="o">=</span> <span class="n">initialize_migrators</span><span class="p">()</span>
 <span class="n">migrator</span> <span class="o">=</span> <span class="n">migrators</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
-<span class="k">print</span><span class="p">(</span><span class="n">migrator</span><span class="o">.</span><span class="n">name</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">migrator</span><span class="o">.</span><span class="n">name</span><span class="p">)</span>
 <span class="n">graph</span> <span class="o">=</span> <span class="n">migrator</span><span class="o">.</span><span class="n">graph</span>
 <span class="c1"># number of packages in the graph to be migrated</span>
-<span class="k">print</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">graph</span><span class="p">))</span>
+<span class="nb">print</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">graph</span><span class="p">))</span>
 </pre></div>
 </div>
 </div></blockquote>
@@ -131,7 +131,7 @@ Note that you will need a copy of <code class="docutils literal notranslate"><sp
       &copy;2019, Conda-forge-tick Development Team.
       
       |
-      Powered by <a href="http://sphinx-doc.org/">Sphinx 2.2.1</a>
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 2.2.2</a>
       &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
       
       |
