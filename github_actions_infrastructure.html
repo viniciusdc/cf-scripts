@@ -71,7 +71,7 @@ will cause all of the actions on feedstocks that run with it to fail.</p>
 <p>PRs from the regro-cf-autotick-bot are automatically merged when all of the
 following conditions are met</p>
 <ol class="arabic simple">
-<li><p>the PR must have at least one passing status besides the linter
+<li><p>all PR statuses must be passing, there must be at least one passing status, except maybe the linter
 (which is not fully reliable due to various bugs that need fixing)</p></li>
 <li><p>the PR must be from the regro-cf-autotick-bot user</p></li>
 <li><p>the feedstock must have <code class="docutils literal notranslate"><span class="pre">bot:</span> <span class="pre">automerge:</span> <span class="pre">True</span></code> set in the <code class="docutils literal notranslate"><span class="pre">conda-forge.yml</span></code>
