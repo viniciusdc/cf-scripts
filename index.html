@@ -37,8 +37,9 @@
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="migrators.html">Making Migrators</a></li>
 <li class="toctree-l1"><a class="reference internal" href="migrators.html#building-a-migration-yaml-using-cfep9">Building a Migration YAML Using CFEP9</a></li>
-<li class="toctree-l1"><a class="reference internal" href="migrators.html#building-a-migration">Building a Migration</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="migrators.html#adding-to-auto-tick-xsh">Adding to <code class="docutils literal notranslate"><span class="pre">auto_tick.xsh</span></code></a></li>
+<li class="toctree-l1"><a class="reference internal" href="migrators.html#custom-migrations">Custom Migrations</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="migrators.html#write-your-custom-migration-class">Write your Custom Migration Class</a></li>
+<li class="toctree-l2"><a class="reference internal" href="migrators.html#add-your-migration-to-auto-tick-py">Add your <code class="docutils literal notranslate"><span class="pre">Migration</span></code> to <code class="docutils literal notranslate"><span class="pre">auto_tick.py</span></code></a></li>
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="usage.html">Usage Docs</a><ul>
@@ -50,6 +51,11 @@
 <li class="toctree-l2"><a class="reference internal" href="github_actions_infrastructure.html#design">Design</a></li>
 <li class="toctree-l2"><a class="reference internal" href="github_actions_infrastructure.html#automerging-prs">Automerging PRs</a></li>
 <li class="toctree-l2"><a class="reference internal" href="github_actions_infrastructure.html#monitoring">Monitoring</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="version_migrator.html">Notes on the <code class="docutils literal notranslate"><span class="pre">Version</span></code> Migrator</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="version_migrator.html#yaml-parsing-with-jinja2"><code class="docutils literal notranslate"><span class="pre">YAML</span></code> Parsing with Jinja2</a></li>
+<li class="toctree-l2"><a class="reference internal" href="version_migrator.html#version-migration-algorithm">Version Migration Algorithm</a></li>
 </ul>
 </li>
 </ul>
@@ -84,9 +90,10 @@
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="migrators.html">Making Migrators</a></li>
 <li class="toctree-l1"><a class="reference internal" href="migrators.html#building-a-migration-yaml-using-cfep9">Building a Migration YAML Using CFEP9</a></li>
-<li class="toctree-l1"><a class="reference internal" href="migrators.html#building-a-migration">Building a Migration</a></li>
+<li class="toctree-l1"><a class="reference internal" href="migrators.html#custom-migrations">Custom Migrations</a></li>
 <li class="toctree-l1"><a class="reference internal" href="usage.html">Usage Docs</a></li>
 <li class="toctree-l1"><a class="reference internal" href="github_actions_infrastructure.html">GitHub Actions Infrastructure</a></li>
+<li class="toctree-l1"><a class="reference internal" href="version_migrator.html">Notes on the <code class="docutils literal notranslate"><span class="pre">Version</span></code> Migrator</a></li>
 </ul>
 
 <div class="relations">

@@ -57,76 +57,38 @@ Note that the <code class="docutils literal notranslate"><span class="pre">migra
 <p>Please see the <a class="reference external" href="https://github.com/conda-forge/conda-forge-enhancement-proposals/blob/master/cfep-09.md#implementation-details">CFEP9 implementation</a> information for the
 different kinds of migrations that are available.</p>
 </div>
-<div class="section" id="building-a-migration">
-<h1>Building a Migration<a class="headerlink" href="#building-a-migration" title="Permalink to this headline">¶</a></h1>
-<p>To build a <code class="docutils literal notranslate"><span class="pre">Rebuild</span></code> Migrator it must be added to <code class="docutils literal notranslate"><span class="pre">auto_tick.xsh</span></code>.</p>
-<div class="section" id="adding-to-auto-tick-xsh">
-<h2>Adding to <code class="docutils literal notranslate"><span class="pre">auto_tick.xsh</span></code><a class="headerlink" href="#adding-to-auto-tick-xsh" title="Permalink to this headline">¶</a></h2>
-<p>To have the bot run the migration we need to add the migrator to add it to the
+<div class="section" id="custom-migrations">
+<h1>Custom Migrations<a class="headerlink" href="#custom-migrations" title="Permalink to this headline">¶</a></h1>
+<p>Custom migrators are used when</p>
+<ol class="arabic simple">
+<li><p>the internals of the conda-forge system (e.g., the various yaml configuration files)
+need to be changed</p></li>
+<li><p>the migration task falls outside of CFGEP-09 (e.g., renaming a package, swapping
+a dependency, etc.)</p></li>
+</ol>
+<p>To add a custom migration, follow the following steps.</p>
+<div class="section" id="write-your-custom-migration-class">
+<h2>Write your Custom Migration Class<a class="headerlink" href="#write-your-custom-migration-class" title="Permalink to this headline">¶</a></h2>
+<p>Your <code class="docutils literal notranslate"><span class="pre">Migration</span></code> instance should inherit from <code class="docutils literal notranslate"><span class="pre">conda_forge_tick.migrations.core.Migration</span></code>.
+You should implement the <code class="docutils literal notranslate"><span class="pre">migrate</span></code> method and override any other methods in order to make
+a good looking pull request with a correct change to the feedstock.</p>
+</div>
+<div class="section" id="add-your-migration-to-auto-tick-py">
+<h2>Add your <code class="docutils literal notranslate"><span class="pre">Migration</span></code> to <code class="docutils literal notranslate"><span class="pre">auto_tick.py</span></code><a class="headerlink" href="#add-your-migration-to-auto-tick-py" title="Permalink to this headline">¶</a></h2>
+<p>To have the bot run the migration, we need to add the migrator to add it to the
 <code class="docutils literal notranslate"><span class="pre">auto_tick</span></code> module.
 If the migrator needs no information about the graph (eg. version bumps) then
-it can be added to the <code class="docutils literal notranslate"><span class="pre">$MIGRATORS</span></code> list directly.
-If the migrator needs graph information (eg it runs in topo order) then it
-needs to be added by a function (eg. <code class="docutils literal notranslate"><span class="pre">add_rebuild</span></code>).
+it can be added to the <code class="docutils literal notranslate"><span class="pre">MIGRATORS</span></code> list directly.
+If the migrator needs graph information (eg it runs in topological order) then it
+needs to be added by a function (e.g., <code class="docutils literal notranslate"><span class="pre">add_rebuild</span></code>).
 This function takes in the list of migrators and the entire package graph.
 The job of the function is to pair down the graph to the nodes which need
 to be migrated, for instance only packages which require <code class="docutils literal notranslate"><span class="pre">python</span></code>.
 This paired down graph is passed into the migrator, which is then added
-to the migrators list.
-Many times one can use the <code class="docutils literal notranslate"><span class="pre">Rebuild</span></code> class without having to create
-a custom migrator.
-Custom migrators are used when the internals of the conda-forge system (the various
-yaml configuration files) need to be changed.</p>
-<p>Once the <code class="docutils literal notranslate"><span class="pre">add_rebuild...</span></code> function is created it needs to be added to the <code class="docutils literal notranslate"><span class="pre">initialize_migrators</span></code> function so the migration will go forward.</p>
-<p>Example of migrator addition function for openssl, for most simple re-pinning migration
-one could replace <code class="docutils literal notranslate"><span class="pre">openssl</span></code> with the package which got pinned and things would work:</p>
-<blockquote>
-<div><div class="highlight-xonsh notranslate"><div class="highlight"><pre><span></span><span class="k">def</span> <span class="nf">add_rebuild_openssl</span><span class="p">(</span><span class="n">migrators</span><span class="p">,</span> <span class="n">gx</span><span class="p">):</span>
-<span class="sd">&quot;&quot;&quot;Adds rebuild openssl migrators.</span>
-
-<span class="sd">Parameters</span>
-<span class="sd">----------</span>
-<span class="sd">migrators : list of Migrator</span>
-<span class="sd">    The list of migrators to run.</span>
-
-<span class="sd">&quot;&quot;&quot;</span>
-
-<span class="n">total_graph</span> <span class="o">=</span> <span class="n">copy</span><span class="o">.</span><span class="n">deepcopy</span><span class="p">(</span><span class="n">gx</span><span class="p">)</span>
-
-<span class="k">for</span> <span class="n">node</span><span class="p">,</span> <span class="n">attrs</span> <span class="ow">in</span> <span class="n">gx</span><span class="o">.</span><span class="n">node</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
-    <span class="n">meta_yaml</span> <span class="o">=</span> <span class="n">attrs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;meta_yaml&quot;</span><span class="p">,</span> <span class="p">{})</span> <span class="ow">or</span> <span class="p">{}</span>
-    <span class="n">bh</span> <span class="o">=</span> <span class="n">get_requirements</span><span class="p">(</span><span class="n">meta_yaml</span><span class="p">)</span>
-    <span class="n">openssl_c</span> <span class="o">=</span> <span class="s1">&#39;openssl&#39;</span> <span class="ow">in</span> <span class="n">bh</span>
-
-    <span class="n">rq</span> <span class="o">=</span> <span class="n">_host_run_test_dependencies</span><span class="p">(</span><span class="n">meta_yaml</span><span class="p">)</span>
-
-    <span class="k">for</span> <span class="n">e</span> <span class="ow">in</span> <span class="nb">list</span><span class="p">(</span><span class="n">total_graph</span><span class="o">.</span><span class="n">in_edges</span><span class="p">(</span><span class="n">node</span><span class="p">)):</span>
-        <span class="k">if</span> <span class="n">e</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">rq</span><span class="p">:</span>
-            <span class="n">total_graph</span><span class="o">.</span><span class="n">remove_edge</span><span class="p">(</span><span class="o">*</span><span class="n">e</span><span class="p">)</span>
-    <span class="k">if</span> <span class="ow">not</span> <span class="nb">any</span><span class="p">([</span><span class="n">openssl_c</span><span class="p">]):</span>
-        <span class="n">pluck</span><span class="p">(</span><span class="n">total_graph</span><span class="p">,</span> <span class="n">node</span><span class="p">)</span>
-
-<span class="c1"># post plucking we can have several strange cases, lets remove all selfloops</span>
-<span class="n">total_graph</span><span class="o">.</span><span class="n">remove_edges_from</span><span class="p">(</span><span class="n">total_graph</span><span class="o">.</span><span class="n">selfloop_edges</span><span class="p">())</span>
-
-<span class="c1"># everything which depends on openssl and has not predecessors in the</span>
-<span class="c1"># openssl dependents graph</span>
-<span class="n">top_level</span> <span class="o">=</span> <span class="p">{</span><span class="n">node</span> <span class="k">for</span> <span class="n">node</span> <span class="ow">in</span> <span class="n">gx</span><span class="o">.</span><span class="n">successors</span><span class="p">(</span><span class="s2">&quot;openssl&quot;</span><span class="p">)</span> <span class="k">if</span>
-             <span class="p">(</span><span class="n">node</span> <span class="ow">in</span> <span class="n">total_graph</span><span class="p">)</span> <span class="ow">and</span>
-             <span class="nb">len</span><span class="p">(</span><span class="nb">list</span><span class="p">(</span><span class="n">total_graph</span><span class="o">.</span><span class="n">predecessors</span><span class="p">(</span><span class="n">node</span><span class="p">)))</span> <span class="o">==</span> <span class="mi">0</span><span class="p">}</span>
-<span class="c1"># Since we can&#39;t figure out what order to build packages in a cycle in</span>
-<span class="c1"># we build them all at once</span>
-<span class="n">cycles</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">nx</span><span class="o">.</span><span class="n">simple_cycles</span><span class="p">(</span><span class="n">total_graph</span><span class="p">))</span>
-
-<span class="n">migrators</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
-    <span class="n">Rebuild</span><span class="p">(</span><span class="n">graph</span><span class="o">=</span><span class="n">total_graph</span><span class="p">,</span>
-            <span class="n">pr_limit</span><span class="o">=</span><span class="mi">5</span><span class="p">,</span>
-            <span class="n">name</span><span class="o">=</span><span class="s1">&#39;OpenSSL&#39;</span><span class="p">,</span>
-            <span class="n">top_level</span><span class="o">=</span><span class="n">top_level</span><span class="p">,</span>
-            <span class="n">cycles</span><span class="o">=</span><span class="n">cycles</span><span class="p">,</span> <span class="n">obj_version</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
-</pre></div>
-</div>
-</div></blockquote>
+to the migrators list.</p>
+<p>Once the <code class="docutils literal notranslate"><span class="pre">add_rebuild...</span></code> function is created it needs to be added to the
+<code class="docutils literal notranslate"><span class="pre">initialize_migrators</span></code> function so the migration will go forward.</p>
+<p>See the <code class="docutils literal notranslate"><span class="pre">auto_tick.py</span></code> file for example <code class="docutils literal notranslate"><span class="pre">add_rebuild...</span></code> functions.</p>
 </div>
 </div>
 
@@ -150,12 +112,14 @@ one could replace <code class="docutils literal notranslate"><span class="pre">o
 <ul class="current">
 <li class="toctree-l1 current"><a class="current reference internal" href="#">Making Migrators</a></li>
 <li class="toctree-l1"><a class="reference internal" href="#building-a-migration-yaml-using-cfep9">Building a Migration YAML Using CFEP9</a></li>
-<li class="toctree-l1"><a class="reference internal" href="#building-a-migration">Building a Migration</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="#adding-to-auto-tick-xsh">Adding to <code class="docutils literal notranslate"><span class="pre">auto_tick.xsh</span></code></a></li>
+<li class="toctree-l1"><a class="reference internal" href="#custom-migrations">Custom Migrations</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#write-your-custom-migration-class">Write your Custom Migration Class</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#add-your-migration-to-auto-tick-py">Add your <code class="docutils literal notranslate"><span class="pre">Migration</span></code> to <code class="docutils literal notranslate"><span class="pre">auto_tick.py</span></code></a></li>
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="usage.html">Usage Docs</a></li>
 <li class="toctree-l1"><a class="reference internal" href="github_actions_infrastructure.html">GitHub Actions Infrastructure</a></li>
+<li class="toctree-l1"><a class="reference internal" href="version_migrator.html">Notes on the <code class="docutils literal notranslate"><span class="pre">Version</span></code> Migrator</a></li>
 </ul>
 
 <div class="relations">
