@@ -5,7 +5,7 @@ import json
 import os
 
 from conda_forge_tick.utils import setup_logger, load_graph
-from conda_forge_tick.update_sources import (
+from update_sources import (
     AbstractSource,
     PyPI,
     CRAN,
@@ -23,12 +23,37 @@ from typing import (
     List,
 )
 
-logger = logging.getLogger("conda_forge_tick.ts-graph_update_version")
+logger = logging.getLogger("conda_forge_tick._update_versions")
+
+
+def get_latest_version(
+    name: str, payload_meta_yaml: Any, sources: Iterable[AbstractSource]
+):
+    with payload_meta_yaml as meta_yaml:
+        for source in sources:
+            logger.debug("source: %s", source.__class__.__name__)
+            url = source.get_url(meta_yaml)
+            logger.debug("url: %s", url)
+            if url is None:
+                continue
+            ver = source.get_version(url)
+            logger.debug("ver: %s", ver)
+            if ver:
+                return ver
+            else:
+                logger.debug(f"Upstream: Could not find version on {source.name}")
+        if not meta_yaml.get("bad"):
+            logger.debug("Upstream: unknown source")
+        return False
+
 
 # It's expected that your environment provide this info.
 CONDA_FORGE_TICK_DEBUG = os.environ.get("CONDA_FORGE_TICK_DEBUG", False)
 
-def new_update_upstream_versions(gx: nx.DiGraph, sources: Iterable[AbstractSource] = None) -> None:
+
+def new_update_upstream_versions(
+    gx: nx.DiGraph, sources: Iterable[AbstractSource] = None
+) -> None:
     sources = (
         (PyPI(), CRAN(), NPM(), ROSDistro(), RawURL(), Github())
         if sources is None
@@ -52,11 +77,12 @@ def new_update_upstream_versions(gx: nx.DiGraph, sources: Iterable[AbstractSourc
                 to_update["nodes"].append({"id": str(node), "version": "False"})
                 Node_count += 1
                 continue
-            
+
             # verify the actual situation of the package;
             actual_ver = str(attrs.get("version"))
             if attrs.get("bad") or attrs.get("archived"):
-                logger.info(f"# {Node_count:<5} - {node:<30} - ver: {actual_ver:<10} - bad/archived"
+                logger.info(
+                    f"# {Node_count:<5} - {node:<30} - ver: {actual_ver:<10} - bad/archived"
                 )
                 Node_count += 1
                 continue
@@ -68,10 +94,13 @@ def new_update_upstream_versions(gx: nx.DiGraph, sources: Iterable[AbstractSourc
                     se = repr(e)
                 except Exception as ee:
                     se = "Bad exception string: {}".format(ee)
-                logger.warning(f"Warning: Error getting upstream version of {node}: {se}")
-            else:
-                logger.info(f"# {Node_count:<5} - {node:<30} - ver: {attrs.get('version'):<10} - new ver: {new_version}"
+                logger.warning(
+                    f"Warning: Error getting upstream version of {node}: {se}"
                 )
+
+            logger.info(
+                f"# {Node_count:<5} - {node:<30} - ver: {actual_ver:<10} - new ver: {new_version}"
+            )
             to_update["nodes"].append({"id": str(node), "version": str(new_version)})
             Node_count += 1
     return to_update
@@ -97,4 +126,3 @@ def main(args: Any = None) -> None:
 
 if __name__ == "__main__":
     main()
-
