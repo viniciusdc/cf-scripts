@@ -105,7 +105,7 @@ BOT_RERUN_LABEL = {
     "color": "#191970",
     "description": (
         "Apply this label if you want the bot to retry "
-        "issueing a particular pull-request"
+        "issuing a particular pull-request"
     ),
 }
 
@@ -153,7 +153,7 @@ def run(
     # TODO: stop doing this.
     migrator.attrs = feedstock_ctx.attrs  # type: ignore
 
-    branch_name = migrator.remote_branch(feedstock_ctx) + '_h' + uuid4().hex[0:6]
+    branch_name = migrator.remote_branch(feedstock_ctx) + "_h" + uuid4().hex[0:6]
 
     # TODO: run this in parallel
     feedstock_dir, repo = get_repo(
@@ -204,8 +204,7 @@ def run(
             # then bail if it does not work again
             try:
                 eval_cmd(
-                    "conda smithy rerender -c auto --no-check-uptodate",
-                    timeout=300,
+                    "conda smithy rerender -c auto --no-check-uptodate", timeout=300,
                 )
             except SubprocessError:
                 return False, False
@@ -225,7 +224,12 @@ def run(
                 )
             ]
 
-    if migrator.check_solvable and not is_recipe_solvable(feedstock_dir):
+    if (
+        migrator.check_solvable
+        or feedstock_ctx.attrs["conda-forge.yml"]
+        .get("bot", {})
+        .get("check_solvable", False)
+    ) and not is_recipe_solvable(feedstock_dir):
         eval_cmd(f"rm -rf {feedstock_dir}")
         return False, False
 
@@ -234,7 +238,7 @@ def run(
     if (
         isinstance(migrator, MigrationYaml)
         and not diffed_files
-        and feedstock_ctx.attrs['name'] != 'conda-forge-pinning'
+        and feedstock_ctx.attrs["name"] != "conda-forge-pinning"
     ):
         # spoof this so it looks like the package is done
         pr_json = {
@@ -252,7 +256,7 @@ def run(
                 body=migrator.pr_body(feedstock_ctx),
                 repo=repo,
                 title=migrator.pr_title(feedstock_ctx),
-                head="%s:%s" % (migrator.ctx.github_username, branch_name),
+                head=f"{migrator.ctx.github_username}:{branch_name}",
                 branch=branch_name,
             )
 
@@ -281,7 +285,7 @@ def run(
     return migrate_return, ljpr
 
 
-def _host_run_test_dependencies(meta_yaml: "MetaYamlTypedDict",) -> Set["PackageName"]:
+def _host_run_test_dependencies(meta_yaml: "MetaYamlTypedDict") -> Set["PackageName"]:
     """Parse the host/run/test dependencies of a recipe
 
     This function parses top-level and `outputs` requirements sections.
@@ -415,8 +419,11 @@ def add_rebuild_migration_yaml(
     """
 
     total_graph = create_rebuild_graph(
-        gx, package_names, excluded_feedstocks,
-        include_noarch=config.get('include_noarch', False))
+        gx,
+        package_names,
+        excluded_feedstocks,
+        include_noarch=config.get("include_noarch", False),
+    )
 
     # Note at this point the graph is made of all packages that have a
     # dependency on the pinned package via Host, run, or test.
@@ -458,10 +465,7 @@ def migration_factory(
 ) -> None:
     migration_yamls = []
     migrations_loc = os.path.join(
-        os.environ["CONDA_PREFIX"],
-        "share",
-        "conda-forge",
-        "migrations",
+        os.environ["CONDA_PREFIX"], "share", "conda-forge", "migrations",
     )
     with indir(migrations_loc):
         for yaml_file in glob.glob("*.y*ml"):
@@ -482,7 +486,7 @@ def migration_factory(
                 for node in gx.nodes.values()
             ],
             [],
-        )
+        ),
     )
     for yaml_file, yaml_contents in migration_yamls:
         loaded_yaml = yaml.safe_load(yaml_contents)
@@ -531,7 +535,7 @@ def _outside_pin_range(pin_spec, current_pin, new_version):
 def create_migration_yaml_creator(migrators: MutableSequence[Migrator], gx: nx.DiGraph):
     with indir(os.environ["CONDA_PREFIX"]):
         pinnings = parse_config_file(
-            "conda_build_config.yaml", config=Config(**CB_CONFIG)
+            "conda_build_config.yaml", config=Config(**CB_CONFIG),
         )
     feedstocks_to_be_repinned = []
     for k, package_pin_list in pinnings.items():
@@ -557,8 +561,7 @@ def create_migration_yaml_creator(migrators: MutableSequence[Migrator], gx: nx.D
 
             # we need a special parsing for pinning stuff
             meta_yaml = parse_meta_yaml(
-                gx.nodes[k]["payload"]["raw_meta_yaml"],
-                for_pinning=True,
+                gx.nodes[k]["payload"]["raw_meta_yaml"], for_pinning=True,
             )
 
             # find the most stringent max pin for this feedstock if any
@@ -592,7 +595,7 @@ def create_migration_yaml_creator(migrators: MutableSequence[Migrator], gx: nx.D
                 )
 
             current_pins = list(
-                map(lambda x: re.sub("[^0-9.]", "", x).rstrip("."), current_pins)
+                map(lambda x: re.sub("[^0-9.]", "", x).rstrip("."), current_pins),
             )
             current_version = re.sub("[^0-9.]", "", current_version).rstrip(".")
             if current_pins == [""]:
@@ -602,15 +605,14 @@ def create_migration_yaml_creator(migrators: MutableSequence[Migrator], gx: nx.D
             # If the current pin and the current version is the same nothing
             # to do even if the pin isn't accurate to the spec
             if current_pin != current_version and _outside_pin_range(
-                pin_spec, current_pin, current_version
+                pin_spec, current_pin, current_version,
             ):
                 feedstocks_to_be_repinned.append(k)
                 print(package_name, current_version, current_pin, pin_spec)
                 migrators.append(
                     MigrationYamlCreator(
-                        package_name, current_version, current_pin,
-                        pin_spec, k, gx
-                    )
+                        package_name, current_version, current_pin, pin_spec, k, gx,
+                    ),
                 )
 
 
@@ -623,9 +625,9 @@ def initialize_migrators(
     temp = glob.glob("/tmp/*")
     gx = load_graph()
     smithy_version = eval_cmd("conda smithy --version")
-    pinning_version = json.loads(eval_cmd("conda list conda-forge-pinning --json"))[
-        0
-    ]["version"]
+    pinning_version = json.loads(eval_cmd("conda list conda-forge-pinning --json"))[0][
+        "version"
+    ]
 
     add_arch_migrate(MIGRATORS, gx)
     migration_factory(MIGRATORS, gx)
@@ -666,10 +668,8 @@ def _compute_time_per_migrator(mctx):
             _num_nodes = 0
             for node_name in mmctx.effective_graph.nodes:
                 with mmctx.effective_graph.nodes[node_name]["payload"] as attrs:
-                    _attempts = (
-                        attrs
-                        .get("new_version_attempts", {})
-                        .get(attrs.get("new_version", ""), 0)
+                    _attempts = attrs.get("new_version_attempts", {}).get(
+                        attrs.get("new_version", ""), 0,
                     )
                     if _attempts == 0:
                         _num_nodes += 1
@@ -729,11 +729,9 @@ def main(args: "CLIArgs") -> None:
     )
 
     # compute the time per migrator
-    (
-        num_nodes,
-        time_per_migrator,
-        tot_time_per_migrator,
-    ) = _compute_time_per_migrator(mctx)
+    (num_nodes, time_per_migrator, tot_time_per_migrator) = _compute_time_per_migrator(
+        mctx,
+    )
     for i, migrator in enumerate(MIGRATORS):
         if hasattr(migrator, "name"):
             extra_name = "-%s" % migrator.name
@@ -784,9 +782,9 @@ def main(args: "CLIArgs") -> None:
                         attrs.get("version"),
                         attrs.get("new_version"),
                         (
-                            attrs
-                            .get("new_version_attempts", {})
-                            .get(attrs.get("new_version", ""), 0)
+                            attrs.get("new_version_attempts", {}).get(
+                                attrs.get("new_version", ""), 0,
+                            )
                         ),
                     )
 
@@ -798,11 +796,11 @@ def main(args: "CLIArgs") -> None:
                 _now = time.time()
                 if (
                     (
-                        _now - int(env.get("START_TIME", time.time())) >
-                        int(env.get("TIMEOUT", 600))
-                    ) or
-                    good_prs >= migrator.pr_limit or
-                    (_now - _mg_start) > time_per
+                        _now - int(env.get("START_TIME", time.time()))
+                        > int(env.get("TIMEOUT", 600))
+                    )
+                    or good_prs >= migrator.pr_limit
+                    or (_now - _mg_start) > time_per
                 ):
                     break
 

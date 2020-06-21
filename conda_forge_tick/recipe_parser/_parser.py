@@ -41,7 +41,7 @@ def _config_has_key_with_selectors(cfg: dict, key: str):
 
 
 def _parse_jinja2_variables(meta_yaml: str) -> dict:
-    """Parse all assignements of jinja2 variables in a recipe.
+    """Parse all assignments of jinja2 variables in a recipe.
 
     For example, the following file
 
@@ -78,7 +78,7 @@ def _parse_jinja2_variables(meta_yaml: str) -> dict:
     jinja2_vals = {}
     for i, n in enumerate(all_nodes):
         if isinstance(n, jinja2.nodes.Assign) and isinstance(
-            n.node, jinja2.nodes.Const
+            n.node, jinja2.nodes.Const,
         ):
             if _config_has_key_with_selectors(jinja2_vals, n.target.name):
                 # selectors!
@@ -116,9 +116,9 @@ def _parse_jinja2_variables(meta_yaml: str) -> dict:
         elif isinstance(n, jinja2.nodes.Assign):
             if isinstance(n.target, jinja2.nodes.Tuple):
                 for __n in n.target.items:
-                    jinja2_exprs[__n.name] = meta_yaml_lines[n.lineno-1]
+                    jinja2_exprs[__n.name] = meta_yaml_lines[n.lineno - 1]
             else:
-                jinja2_exprs[n.target.name] = meta_yaml_lines[n.lineno-1]
+                jinja2_exprs[n.target.name] = meta_yaml_lines[n.lineno - 1]
 
     # we don't need the indexes into the jinja2 node list anymore
     for key, val in jinja2_vals.items():
@@ -294,7 +294,7 @@ def _replace_jinja2_vars(lines: List[str], jinja2_vars: dict) -> List[str]:
                     + " %}"
                     + "  # ["
                     + selector
-                    + "]\n"
+                    + "]\n",
                 )
             else:
                 extra_lines.append(
@@ -303,7 +303,7 @@ def _replace_jinja2_vars(lines: List[str], jinja2_vars: dict) -> List[str]:
                     + " = "
                     + json.dumps(jinja2_vars[key])
                     + " %}"
-                    + "\n"
+                    + "\n",
                 )
 
         new_lines = extra_lines + new_lines
@@ -316,7 +316,7 @@ def _build_jinja2_expr_tmp(jinja2_exprs):
     exprs = []
     tmpls = []
     for var, expr in jinja2_exprs.items():
-        tmpl = "%s: >-\n  {{ %s }}" % (var, var)
+        tmpl = f"{var}: >-\n  {{{{ {var} }}}}"
         if tmpl not in tmpls:
             tmpls.append(tmpl)
         if expr.strip() not in exprs:
@@ -325,7 +325,7 @@ def _build_jinja2_expr_tmp(jinja2_exprs):
     return "\n".join(exprs + tmpls)
 
 
-class CondaMetaYAML(object):
+class CondaMetaYAML:
     """Crude parsing of conda recipes.
 
     NOTE: This parser does not handle any jinja2 constructs besides
@@ -415,7 +415,7 @@ class CondaMetaYAML(object):
         env = jinja2.Environment()
         ast = env.parse(tmpl)
         undefined = jinja2.meta.find_undeclared_variables(ast)
-        undefined = set([u for u in undefined if u not in jinja2_vars])
+        undefined = {u for u in undefined if u not in jinja2_vars}
 
         # if we found them, remove the offending statements
         if len(undefined) > 0:
@@ -434,8 +434,7 @@ class CondaMetaYAML(object):
         # get a new parser since it carries state about the jinja2 munging
         # that we don't want to ruin
         _parser = _get_yaml_parser()
-        return _parser.load(
-            jinja2.Template(tmpl).render(**jinja2_vars))
+        return _parser.load(jinja2.Template(tmpl).render(**jinja2_vars))
 
     def dump(self, fp: Any):
         """Dump the recipe to a file-like object.

@@ -24,6 +24,7 @@ from conda_forge_tick.contexts import MigratorContext, FeedstockContext
 
 from .git_utils import feedstock_url
 
+
 def write_version_migrator_status(migrator, mctx):
     """write the status of the version migrator"""
 
@@ -46,10 +47,8 @@ def write_version_migrator_status(migrator, mctx):
                 out["queued"].append(node)
             else:
                 out["errored"].append(node)
-                out["errors"][node] = (
-                    attrs
-                    .get("new_version_errors", {})
-                    .get(new_version, "no error information available")
+                out["errors"][node] = attrs.get("new_version_errors", {}).get(
+                    new_version, "no error information available",
                 )
 
     with open("./status/version_status.json", "w") as f:
@@ -80,10 +79,12 @@ def graph_migrator_status(
     from streamz.graph import _clean_text
 
     gv = graphviz.Digraph(graph_attr={"packmode": "array_3"})
+
+    # pinning isn't actually in the migration
+    if "conda-forge-pinning" in gx2.nodes():
+        gx2.remove_node("conda-forge-pinning")
+
     for node, node_attrs in gx2.nodes.items():
-        # pinning isn't actually in the migration
-        if node == 'conda-forge-pinning':
-            continue
         attrs = node_attrs["payload"]
         # remove archived from status
         if attrs.get("archived", False):
@@ -158,8 +159,12 @@ def graph_migrator_status(
                 fillcolor=fc,
                 style="filled",
                 fontcolor=fntc,
-                URL=(pr_json or {}).get("PR", {}).get(
-                    "html_url", feedstock_url(fctx=feedstock_ctx, protocol="https").strip('.git')),
+                URL=(pr_json or {})
+                .get("PR", {})
+                .get(
+                    "html_url",
+                    feedstock_url(fctx=feedstock_ctx, protocol="https").strip(".git"),
+                ),
             )
 
         # additional metadata for reporting
@@ -172,7 +177,9 @@ def graph_migrator_status(
         if pr_json and "PR" in pr_json:
             # I needed to fake some PRs they don't have html_urls though
             node_metadata["pr_url"] = pr_json["PR"].get(
-                "html_url", feedstock_url(fctx=feedstock_ctx, protocol="https").strip('.git'))
+                "html_url",
+                feedstock_url(fctx=feedstock_ctx, protocol="https").strip(".git"),
+            )
 
     out2: Dict = {}
     for k in out.keys():
@@ -211,17 +218,17 @@ def main(args: Any = None) -> None:
                 migrator_name = migrator.__class__.__name__.lower()
             total_status[migrator_name] = f"{migrator.name} Migration Status"
             status, build_order, gv = graph_migrator_status(migrator, mctx.graph)
-            with open(os.path.join(f"./status/{migrator_name}.json"), "w") as fo:
-                json.dump(status, fo, indent=2)
+            with open(os.path.join(f"./status/{migrator_name}.json"), "w") as fp:
+                json.dump(status, fp, indent=2)
 
             d = gv.pipe("dot")
-            with tempfile.NamedTemporaryFile(suffix='.dot') as ntf:
+            with tempfile.NamedTemporaryFile(suffix=".dot") as ntf:
                 ntf.write(d)
                 # make the graph a bit more compact
                 d = Source(
                     subprocess.check_output(
-                        ["unflatten", "-f", "-l", "5", "-c", "10", f"{ntf.name}"]
-                    ).decode("utf-8")
+                        ["unflatten", "-f", "-l", "5", "-c", "10", f"{ntf.name}"],
+                    ).decode("utf-8"),
                 ).pipe("svg")
             with open(os.path.join(f"./status/{migrator_name}.svg"), "wb") as fb:
                 fb.write(d or gv.pipe("svg"))

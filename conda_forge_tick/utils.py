@@ -28,9 +28,7 @@ import networkx as nx
 if typing.TYPE_CHECKING:
     from mypy_extensions import TypedDict
     from .migrators_types import PackageName
-    from conda_forge_tick.migrators_types import (
-        MetaYamlTypedDict,
-    )
+    from conda_forge_tick.migrators_types import MetaYamlTypedDict
 
 T = typing.TypeVar("T")
 TD = typing.TypeVar("TD", bound=dict, covariant=True)
@@ -53,7 +51,7 @@ CB_CONFIG = dict(
     pin_compatible=lambda *args, **kwargs: args[0],
     cdt=lambda *args, **kwargs: "cdt_stub",
     cran_mirror="https://cran.r-project.org",
-    datetime=datetime
+    datetime=datetime,
 )
 
 
@@ -67,7 +65,7 @@ CB_CONFIG_PINNING = dict(
     pin_compatible=lambda *args, **kwargs: {"package_name": args[0], **kwargs},
     cdt=lambda *args, **kwargs: "cdt_stub",
     cran_mirror="https://cran.r-project.org",
-    datetime=datetime
+    datetime=datetime,
 )
 
 
@@ -81,11 +79,7 @@ def eval_cmd(cmd, **kwargs):
     timeout = kwargs.pop("timeout", None)
     env.update(kwargs)
     c = subprocess.run(
-        shlex.split(cmd),
-        check=True,
-        stdout=subprocess.PIPE,
-        env=env,
-        timeout=timeout,
+        shlex.split(cmd), check=True, stdout=subprocess.PIPE, env=env, timeout=timeout,
     )
     return c.stdout.decode("utf-8")
 
@@ -223,7 +217,7 @@ def parse_meta_yaml(text: str, for_pinning=False, **kwargs: Any) -> "MetaYamlTyp
     Returns
     -------
     dict :
-        The parsed YAML dict. If parseing fails, returns an empty dict.
+        The parsed YAML dict. If parsing fails, returns an empty dict.
 
     """
     from conda_build.config import Config
@@ -243,8 +237,9 @@ def setup_logger(logger: logging.Logger, level: Optional[str] = "INFO") -> None:
     logger.setLevel(level.upper())
     ch = logging.StreamHandler()
     ch.setLevel(level.upper())
-    ch.setFormatter(logging.Formatter(
-        "%(asctime)-15s %(levelname)-8s %(name)s || %(message)s"))
+    ch.setFormatter(
+        logging.Formatter("%(asctime)-15s %(levelname)-8s %(name)s || %(message)s"),
+    )
     logger.addHandler(ch)
 
 
@@ -347,9 +342,10 @@ def executor(kind: str, max_workers: int, daemon=True) -> typing.Iterator[Execut
 
         processes = kind == "dask" or kind == "dask-process"
 
-        with dask.config.set({'distributed.worker.daemon': daemon}):
+        with dask.config.set({"distributed.worker.daemon": daemon}):
             with distributed.LocalCluster(
-                    n_workers=max_workers, processes=processes) as cluster:
+                n_workers=max_workers, processes=processes,
+            ) as cluster:
                 with distributed.Client(cluster) as client:
                     yield ClientExecutor(client)
     else:
@@ -415,7 +411,7 @@ def dump(
 def loads(
     s: str, object_hook: "Callable[[dict], Any]" = object_hook, **kwargs: Any
 ) -> dict:
-    """Loads a string as JSON, with approriate object hooks"""
+    """Loads a string as JSON, with appropriate object hooks"""
     return json.loads(s, object_hook=object_hook, **kwargs)
 
 
@@ -436,7 +432,7 @@ def dump_graph_json(gx: nx.DiGraph, filename: str = "graph.json") -> None:
 
 
 def dump_graph_dynamo(
-    gx: nx.DiGraph, tablename: str = "graph", region: str = "us-east-2"
+    gx: nx.DiGraph, tablename: str = "graph", region: str = "us-east-2",
 ) -> None:
     print(f"DynamoDB dump to {tablename} in {region}")
     ddb = boto3.resource("dynamodb", region_name=region)
